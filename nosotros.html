@@ -1391,7 +1391,7 @@
           padding-right: calc(4.5rem + 10px) !important;
           gap: 30px !important;
           box-sizing: border-box !important;
-          max-width: 1200px !important;
+          max-width: 100% !important;
           width: 100% !important;
         }
         #hero .slide-0 .slide-buttons-container {
@@ -1412,6 +1412,7 @@
           #hero .slide-0 .container {
             padding-left: 1.25rem !important;
             padding-right: 1.25rem !important;
+            max-width: 100% !important;
           }
           #hero .slide-title-0 { font-size: 50px !important; line-height: 1 !important; }
         }
@@ -1454,7 +1455,7 @@
           padding-right: max(calc(4.5rem + 10px), 40px) !important;
           gap: 30px !important;
           box-sizing: border-box !important;
-          max-width: 1200px !important;
+          max-width: 100% !important;
           width: 100% !important;
         }
         #hero .slide-1 .slide-buttons-container {
@@ -1475,20 +1476,27 @@
           #hero .slide-1 .container {
             padding-left: 1.25rem !important;
             padding-right: 1.25rem !important;
+            max-width: 100% !important;
           }
           #hero .slide-title-1 { font-size: 50px !important; line-height: 1 !important; }
         }
       
-  .hero-slider-wrapper {
+  #hero .hero-slider-wrapper, .hero-slider-wrapper {
     position: relative;
-    width: 1920px;
+    width: 100%;
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
     min-height: 0;
-    height: 540px;
+    height: 760px;
     background-color: var(--color-bg);
     overflow: hidden;
+  }
+  #hero .hero-section-slider, .hero-section-slider {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
   }
   .desktop-only-arrow {
     display: flex !important;
@@ -1497,14 +1505,14 @@
     .desktop-only-arrow {
       display: none !important;
     }
-    .hero-slider-wrapper {
+    #hero .hero-slider-wrapper, .hero-slider-wrapper {
       width: 100%;
       min-height: 380px;
       height: 55vh;
     }
   }
 </style>
-<section class="hero-section-slider" style="background-color: var(--color-bg);">
+<section class="hero-section-slider" style="background-color: var(--color-bg); width: 100%;">
   <div class="hero-slider-wrapper">
     
         <div class="hero-slide slide-0 active-slide" style="
@@ -1521,7 +1529,7 @@
           background-size: cover;
           background-position: center;
         ">
-          <div class="container" style="display: flex; flex-direction: column; align-items: flex-start; text-align: left; max-width: 1200px; width: 100%; padding-top: 2rem; padding-bottom: 290px; padding-left: max(calc(4.5rem + 10px), 40px); padding-right: calc(4.5rem + 10px); position: relative; z-index: 5; gap: 30px; box-sizing: border-box;">
+          <div class="container" style="display: flex; flex-direction: column; align-items: flex-start; text-align: left; max-width: 100%; width: 100%; padding-top: 2rem; padding-bottom: 290px; padding-left: max(calc(4.5rem + 10px), 40px); padding-right: calc(4.5rem + 10px); position: relative; z-index: 5; gap: 30px; box-sizing: border-box;">
             
           <h1 class="slide-title-0" style="margin: calc(-0.14em + 2px) 0 calc(-0.1em + 4px) 0 !important; font-family: var(--font-title); white-space: pre-line; line-height: 1;">
             Tu momento.<br/>Cada día.
@@ -1549,7 +1557,7 @@
           background-size: cover;
           background-position: center;
         ">
-          <div class="container" style="display: flex; flex-direction: column; align-items: flex-start; text-align: left; max-width: 1200px; width: 100%; padding-top: 2rem; padding-bottom: 310px; padding-left: calc(4.5rem + 10px); padding-right: max(calc(4.5rem + 10px), 40px); position: relative; z-index: 5; gap: 30px; box-sizing: border-box;">
+          <div class="container" style="display: flex; flex-direction: column; align-items: flex-start; text-align: left; max-width: 100%; width: 100%; padding-top: 2rem; padding-bottom: 310px; padding-left: calc(4.5rem + 10px); padding-right: max(calc(4.5rem + 10px), 40px); position: relative; z-index: 5; gap: 30px; box-sizing: border-box;">
             
           <h1 class="slide-title-1" style="margin: calc(-0.14em + 2px) 0 calc(-0.1em + 4px) 0 !important; font-family: var(--font-title); white-space: pre-line; line-height: 1;">
             Calidad<br/>Profesional
