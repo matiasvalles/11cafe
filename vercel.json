@@ -1,0 +1,48 @@
+{
+  "rewrites": [
+    {
+      "source": "/productos",
+      "destination": "/productos.html"
+    },
+    {
+      "source": "/nosotros",
+      "destination": "/nosotros.html"
+    },
+    {
+      "source": "/contacto",
+      "destination": "/contacto.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/checkout.html"
+    },
+    {
+      "source": "/producto/p-3",
+      "destination": "/producto-p-3.html"
+    },
+    {
+      "source": "/producto/p-y9uhe0y",
+      "destination": "/producto-p-y9uhe0y.html"
+    },
+    {
+      "source": "/producto/p-pw5ev3m",
+      "destination": "/producto-p-pw5ev3m.html"
+    },
+    {
+      "source": "/producto/p-8ulc04w",
+      "destination": "/producto-p-8ulc04w.html"
+    },
+    {
+      "source": "/producto/p-6amape7",
+      "destination": "/producto-p-6amape7.html"
+    },
+    {
+      "source": "/producto/p-83uap4p",
+      "destination": "/producto-p-83uap4p.html"
+    },
+    {
+      "source": "/producto/p-lsb0pue",
+      "destination": "/producto-p-lsb0pue.html"
+    }
+  ]
+}
