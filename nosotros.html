@@ -4093,6 +4093,22 @@
       const cleanZip = String(zip || '').trim();
       if (!cleanZip || cleanZip.length < 4) return;
 
+      window.zipnovaQuotesCacheByZip = window.zipnovaQuotesCacheByZip || {};
+      window.zipnovaInFlightZips = window.zipnovaInFlightZips || {};
+
+      // If we already have cached rates for this zip code, use them directly without flickering
+      if (window.zipnovaQuotesCacheByZip[cleanZip]) {
+        const cached = window.zipnovaQuotesCacheByZip[cleanZip];
+        window.zipnovaRatesCache = cached.rates || [];
+        window.zipnovaStatus = cached.status || null;
+        renderCheckoutShippingMethods();
+        renderCheckoutSummary();
+        return;
+      }
+
+      if (window.zipnovaInFlightZips[cleanZip]) return;
+      window.zipnovaInFlightZips[cleanZip] = true;
+
       const currentProv = document.getElementById('checkout-province') ? document.getElementById('checkout-province').value.trim() : '';
       const currentCity = document.getElementById('checkout-city') ? document.getElementById('checkout-city').value.trim() : '';
       const dest = resolveDestinationLocation(cleanZip, currentProv, currentCity);
@@ -4128,45 +4144,80 @@
       renderCheckoutShippingMethods();
 
       try {
-        const res = await fetch('/api/zipnova/quote', {
+        const payload = {
+          isSandbox: shippingConfig.zipnova.isSandbox !== false,
+          origin_postal_code: originZip,
+          destination_postal_code: cleanZip,
+          origin: {
+            postal_code: originZip,
+            city: originCity,
+            state: originProvince
+          },
+          destination: {
+            postal_code: cleanZip,
+            city: dest.city || "Destino",
+            state: dest.province || "Argentina"
+          },
+          weight_kg: totalWeightKg,
+          declared_value: totalDeclaredVal,
+          packages: packages.length > 0 ? packages : undefined
+        };
+
+        // Try primary and alternative serverless routes for Zipnova
+        let res = await fetch('/api/zipnova-quote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            // Las credenciales de Zipnova nunca viajan desde el navegador:
-            // el endpoint las toma de las variables de entorno del servidor.
-            isSandbox: shippingConfig.zipnova.isSandbox !== false,
-            origin_postal_code: originZip,
-            destination_postal_code: cleanZip,
-            origin: {
-              postal_code: originZip,
-              city: originCity,
-              state: originProvince
-            },
-            destination: {
-              postal_code: cleanZip,
-              city: dest.city || "Destino",
-              state: dest.province || "Argentina"
-            },
-            weight_kg: totalWeightKg,
-            declared_value: totalDeclaredVal,
-            packages: packages.length > 0 ? packages : undefined
-          })
-        });
+          body: JSON.stringify(payload)
+        }).catch(() => null);
 
-        if (res.ok) {
+        if (!res || !res.ok) {
+          res = await fetch('/api/zipnova/quote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(() => null);
+        }
+
+        if (res && res.ok) {
           const data = await res.json();
           if (data && Array.isArray(data.rates) && data.rates.length > 0) {
+            window.zipnovaQuotesCacheByZip[cleanZip] = { rates: data.rates, status: 'ok' };
             window.zipnovaRatesByZip = window.zipnovaRatesByZip || {};
             window.zipnovaRatesByZip[cleanZip] = data.rates;
             window.zipnovaRatesCache = data.rates;
-            localStorage.setItem('user_shipping_zip', cleanZip);
-            window.userShippingZip = cleanZip;
+            window.zipnovaStatus = null;
+            try {
+              localStorage.setItem('user_shipping_zip', cleanZip);
+              window.userShippingZip = cleanZip;
+            } catch(e) {}
+          } else if (data && data.notConfigured) {
+            window.zipnovaQuotesCacheByZip[cleanZip] = { rates: [], status: 'not_configured', error: data.error };
+            window.zipnovaStatus = { notConfigured: true, error: data.error };
+            window.zipnovaRatesCache = [];
+          } else {
+            window.zipnovaQuotesCacheByZip[cleanZip] = { rates: [], status: 'no_rates', error: data?.error || 'Sin cobertura directa para este código postal' };
+            window.zipnovaStatus = { notConfigured: false, error: data?.error };
+            window.zipnovaRatesCache = [];
           }
+        } else if (res) {
+          let errData = {};
+          try { errData = await res.json(); } catch(e) {}
+          window.zipnovaQuotesCacheByZip[cleanZip] = {
+            rates: [],
+            status: errData.notConfigured ? 'not_configured' : 'error',
+            error: errData.error || 'Error al cotizar con Zipnova'
+          };
+          window.zipnovaStatus = {
+            notConfigured: Boolean(errData.notConfigured),
+            error: errData.error || 'Error al conectar con la API de Zipnova'
+          };
+          window.zipnovaRatesCache = [];
         }
       } catch (e) {
         console.warn('Zipnova checkout quote notice:', e);
       } finally {
         window.isFetchingZipnovaQuotes = false;
+        delete window.zipnovaInFlightZips[cleanZip];
         renderCheckoutShippingMethods();
         renderCheckoutSummary();
       }
@@ -4398,12 +4449,10 @@
           const heightCm = (prod && prod.dimensions && prod.dimensions.height) ? Number(prod.dimensions.height) : (shippingConfig?.zipnova?.defaultHeightCm || 10);
           const declaredVal = (prod && prod.price) ? Number(prod.price) : 5000;
 
-          const res = await fetch('/api/zipnova/quote', {
+          let res = await fetch('/api/zipnova-quote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              // Las credenciales de Zipnova nunca viajan desde el navegador:
-              // el endpoint las toma de las variables de entorno del servidor.
               isSandbox: shippingConfig?.zipnova?.isSandbox !== false,
               origin_postal_code: originZip,
               destination_postal_code: zip,
@@ -4428,9 +4477,41 @@
                 declared_value: declaredVal,
               }]
             })
-          });
+          }).catch(() => null);
 
-          if (res.ok) {
+          if (!res || !res.ok) {
+            res = await fetch('/api/zipnova/quote', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                isSandbox: shippingConfig?.zipnova?.isSandbox !== false,
+                origin_postal_code: originZip,
+                destination_postal_code: zip,
+                origin: {
+                  postal_code: originZip,
+                  city: originCity,
+                  state: originProvince
+                },
+                destination: {
+                  postal_code: zip,
+                  city: "Destino",
+                  state: "Argentina"
+                },
+                weight_kg: weightKg,
+                declared_value: declaredVal,
+                packages: [{
+                  weight: Math.max(10, Math.round(weightKg * 1000)),
+                  length: lengthCm,
+                  width: widthCm,
+                  height: heightCm,
+                  sku: prod?.sku || "PROD-" + (prod?.id || "ITEM"),
+                  declared_value: declaredVal,
+                }]
+              })
+            }).catch(() => null);
+          }
+
+          if (res && res.ok) {
             const data = await res.json();
             if (data.rates && Array.isArray(data.rates) && data.rates.length > 0) {
               window.zipnovaRatesByZip = window.zipnovaRatesByZip || {};
@@ -4480,32 +4561,11 @@
         }
       }
 
-      // 4. Si no hay métodos personalizados y tampoco hubo tarifas de Zipnova, mostramos opciones de respaldo estándar
-      if (!zipnovaAdded && activeCustomMethods.length === 0) {
-        const hash = zip.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const costStandard = Number(shippingConfig?.nationalPrice) || (3800 + (hash % 1200));
-        const costExpress = costStandard + 2100;
-        
+      // 4. Si no se agregaron tarifas ni métodos activos, se muestra un mensaje informativo claro
+      if (!zipnovaAdded && activeCustomMethods.length === 0 && (!html || html.trim() === '')) {
         html += `
-          <div class="shipping-option" style="display: flex; flex-direction: column; gap: 0.2rem; padding: 0.55rem 0; border-bottom: 1px solid #f1f5f9;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: 600; color: #1e293b; font-size: 0.88rem;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-accent); display: inline-block; vertical-align: middle;"><path d="M14 18H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h8"/><path d="M14 9h4l4 4v5h-8z"/><circle cx="7.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Envío Estándar a Domicilio</span>
-              <span style="font-weight: 800; color: var(--color-accent); font-size: 0.95rem;">$${formatArgentinePrice(costStandard)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: #64748b;">
-              <span style="color: #0284c7; font-weight: 600;">⏱️ 3 a 5 días hábiles</span>
-              <span>Entrega en puerta</span>
-            </div>
-          </div>
-          <div class="shipping-option" style="display: flex; flex-direction: column; gap: 0.2rem; padding: 0.55rem 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: 600; color: #1e293b; font-size: 0.88rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-accent); display: inline-block; vertical-align: middle;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Envío Express Prioritario</span>
-              <span style="font-weight: 800; color: var(--color-accent); font-size: 0.95rem;">$${formatArgentinePrice(costExpress)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: #64748b;">
-              <span style="color: #0284c7; font-weight: 600;">⏱️ 24 a 48 horas hábiles</span>
-              <span>Prioridad alta</span>
-            </div>
+          <div style="font-size: 0.82rem; color: #64748b; padding: 0.75rem; text-align: center; background: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+            No hay opciones de envío configuradas para este código postal. Coordiná la entrega directamente con la tienda.
           </div>
         `;
       }
