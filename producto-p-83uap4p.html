@@ -1380,11 +1380,13 @@
           max-width: 100% !important;
           box-sizing: border-box !important;
         }
-        #hero .slide-0 {
+        #hero .slide-0, #section-hero .slide-0, .hero-section-slider .slide-0, .slide-0 {
           background-image: url('https://res.cloudinary.com/dcyhj7pzd/image/upload/v1784387910/Banner_principal_ilzm8c.png');
           
+          width: 100% !important;
+          max-width: 100% !important;
         }
-        #hero .slide-0 .container {
+        #hero .slide-0 .container, #section-hero .slide-0 .container, .hero-section-slider .slide-0 .container, .slide-0 .container {
           padding-top: 2rem !important;
           padding-bottom: 290px !important;
           padding-left: max(calc(4.5rem + 10px), 40px) !important;
@@ -1394,27 +1396,28 @@
           max-width: 100% !important;
           width: 100% !important;
         }
-        #hero .slide-0 .slide-buttons-container {
+        #hero .slide-0 .slide-buttons-container, #section-hero .slide-0 .slide-buttons-container, .slide-0 .slide-buttons-container {
           margin-top: 0.25rem !important;
           max-width: 100% !important;
           box-sizing: border-box !important;
         }
         @media (min-width: 769px) {
-          #hero .slide-0 .container {
+          #hero .slide-0 .container, #section-hero .slide-0 .container, .hero-section-slider .slide-0 .container, .slide-0 .container {
             padding-left: max(calc(4.5rem + 10px), 40px) !important;
             padding-right: calc(4.5rem + 10px) !important;
+            max-width: 100% !important;
           }
         }
         @media (max-width: 768px) {
-          #hero .slide-0 {
+          #hero .slide-0, #section-hero .slide-0, .hero-section-slider .slide-0, .slide-0 {
             background-image: url('https://res.cloudinary.com/dcyhj7pzd/image/upload/v1784387910/Banner_principal_ilzm8c.png');
           }
-          #hero .slide-0 .container {
+          #hero .slide-0 .container, #section-hero .slide-0 .container, .hero-section-slider .slide-0 .container, .slide-0 .container {
             padding-left: 1.25rem !important;
             padding-right: 1.25rem !important;
             max-width: 100% !important;
           }
-          #hero .slide-title-0 { font-size: 50px !important; line-height: 1 !important; }
+          #hero .slide-title-0, #section-hero .slide-title-0, .slide-title-0 { font-size: 50px !important; line-height: 1 !important; }
         }
       
         #hero .slide-1 .slide-tagline {
@@ -1444,11 +1447,13 @@
           max-width: 100% !important;
           box-sizing: border-box !important;
         }
-        #hero .slide-1 {
+        #hero .slide-1, #section-hero .slide-1, .hero-section-slider .slide-1, .slide-1 {
           background-image: url('https://res.cloudinary.com/dcyhj7pzd/image/upload/v1784390545/k_oqnr6b.png');
           
+          width: 100% !important;
+          max-width: 100% !important;
         }
-        #hero .slide-1 .container {
+        #hero .slide-1 .container, #section-hero .slide-1 .container, .hero-section-slider .slide-1 .container, .slide-1 .container {
           padding-top: 2rem !important;
           padding-bottom: 310px !important;
           padding-left: calc(4.5rem + 10px) !important;
@@ -1458,33 +1463,46 @@
           max-width: 100% !important;
           width: 100% !important;
         }
-        #hero .slide-1 .slide-buttons-container {
+        #hero .slide-1 .slide-buttons-container, #section-hero .slide-1 .slide-buttons-container, .slide-1 .slide-buttons-container {
           margin-top: 0.25rem !important;
           max-width: 100% !important;
           box-sizing: border-box !important;
         }
         @media (min-width: 769px) {
-          #hero .slide-1 .container {
+          #hero .slide-1 .container, #section-hero .slide-1 .container, .hero-section-slider .slide-1 .container, .slide-1 .container {
             padding-left: calc(4.5rem + 10px) !important;
             padding-right: max(calc(4.5rem + 10px), 40px) !important;
+            max-width: 100% !important;
           }
         }
         @media (max-width: 768px) {
-          #hero .slide-1 {
+          #hero .slide-1, #section-hero .slide-1, .hero-section-slider .slide-1, .slide-1 {
             background-image: url('https://res.cloudinary.com/dcyhj7pzd/image/upload/v1785366875/Banner_principal_wdrbac.png');
           }
-          #hero .slide-1 .container {
+          #hero .slide-1 .container, #section-hero .slide-1 .container, .hero-section-slider .slide-1 .container, .slide-1 .container {
             padding-left: 1.25rem !important;
             padding-right: 1.25rem !important;
             max-width: 100% !important;
           }
-          #hero .slide-title-1 { font-size: 50px !important; line-height: 1 !important; }
+          #hero .slide-title-1, #section-hero .slide-title-1, .slide-title-1 { font-size: 50px !important; line-height: 1 !important; }
         }
       
-  #hero .hero-slider-wrapper, .hero-slider-wrapper {
+  #hero, #hero.section-style-wrapper, #section-hero.builder-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  #hero .hero-section-slider, #section-hero .hero-section-slider, .hero-section-slider {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #hero .hero-slider-wrapper, #section-hero .hero-slider-wrapper, .hero-slider-wrapper {
     position: relative;
-    width: 100%;
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     margin-left: auto;
     margin-right: auto;
     min-height: 0;
@@ -1492,11 +1510,9 @@
     background-color: var(--color-bg);
     overflow: hidden;
   }
-  #hero .hero-section-slider, .hero-section-slider {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
+  #hero .hero-slide, #section-hero .hero-slide, .hero-slide {
+    width: 100% !important;
+    max-width: 100% !important;
   }
   .desktop-only-arrow {
     display: flex !important;
@@ -1505,15 +1521,16 @@
     .desktop-only-arrow {
       display: none !important;
     }
-    #hero .hero-slider-wrapper, .hero-slider-wrapper {
-      width: 100%;
+    #hero .hero-slider-wrapper, #section-hero .hero-slider-wrapper, .hero-slider-wrapper {
+      width: 100% !important;
+      max-width: 100% !important;
       min-height: 380px;
       height: 55vh;
     }
   }
 </style>
-<section class="hero-section-slider" style="background-color: var(--color-bg); width: 100%;">
-  <div class="hero-slider-wrapper">
+<section id="hero" class="hero-section-slider hero-section" style="background-color: var(--color-bg); width: 100%; max-width: 100%; margin: 0; padding: 0;">
+  <div class="hero-slider-wrapper" style="width: 100%; max-width: 100%; height: 760px; min-height: 0;">
     
         <div class="hero-slide slide-0 active-slide" style="
           position: absolute;
