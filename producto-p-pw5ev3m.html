@@ -3884,6 +3884,15 @@
         }
       }
 
+      // Zipnova is the shipping method assigned to this product and is still
+      // being resolved (loading, not configured, or no coverage for this zip).
+      // While that's true we must NEVER inject a generic/hardcoded price below —
+      // that used to show a fake "estimated" cost that had nothing to do with
+      // the real Zipnova quote, and it would flicker in and out as the real
+      // rate arrived a moment later. Instead we track the real status here so
+      // the caller can render an honest "cotizando…" / "no configurado" state.
+      const zipnovaIsPendingOrUnavailable = isZipnovaAllowed && cfg?.zipnova?.enabled !== false && !options.some(o => o.type === 'zipnova');
+
       // 3. Retiro en Tienda / Pickup
       const isPickupAllowed = isProductAllowedForPickup(prod, cfg);
       if (isPickupAllowed && cfg?.pickupEnabled !== false) {
@@ -3904,8 +3913,14 @@
         });
       }
 
-      // Fallback if no delivery option matched
-      if (options.length === 0) {
+      // Fallback if no delivery option matched. IMPORTANT: this generic/estimated
+      // price must only appear for stores that have no shipping method configured
+      // at all. If Zipnova is the configured method for this product and we're
+      // simply waiting on its real quote (or it failed/has no coverage), we must
+      // NOT substitute a made-up price — that price has no relation to what the
+      // customer would actually pay. Leaving options empty here lets the caller
+      // show an honest "cotizando…" / "no disponible" status instead.
+      if (options.length === 0 && !zipnovaIsPendingOrUnavailable) {
         if (isFreeProduct) {
           options.push({
             id: 'free_standard_fallback',
@@ -5861,6 +5876,23 @@
           window.selectedShippingMethodId = currentSelectedId;
         }
 
+        // No option resolved yet: never leave a stale/fake price selected, and
+        // tell the customer honestly what's going on instead of a blank gap.
+        if (groupOptions.length === 0) {
+          let statusMsg = 'No hay opciones de envío configuradas para este código postal. Coordiná la entrega directamente con la tienda.';
+          if (window.isFetchingZipnovaQuotes) {
+            statusMsg = 'Cotizando el envío real con Zipnova…';
+          } else if (window.zipnovaStatus?.notConfigured) {
+            statusMsg = 'El envío con Zipnova todavía no está configurado en el servidor (faltan las variables de entorno en Vercel). Coordiná la entrega directamente con la tienda.';
+          } else if (window.zipnovaStatus?.error) {
+            statusMsg = 'No se pudo cotizar el envío para este código postal: ' + window.zipnovaStatus.error;
+          }
+          window.selectedGroupShippingMethods[0] = '';
+          window.selectedShippingMethodId = '';
+          container.innerHTML = bannerHtml + '<div style="font-size: 0.82rem; color: #64748b; padding: 0.65rem 0.75rem; text-align: center; background: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0;">' + statusMsg + '</div>';
+          return;
+        }
+
         let html = bannerHtml + '<div id="checkout-shipping-methods-list" style="display: flex; flex-direction: column; gap: 0.5rem;">';
         groupOptions.forEach((opt) => {
           const isChecked = opt.id === currentSelectedId;
@@ -5945,7 +5977,11 @@
 
             <!-- Available options for this specific group -->
             <div style="display: flex; flex-direction: column; gap: 0.45rem;">
-              ${g.availableOptions.map(opt => {
+              ${g.availableOptions.length === 0 ? (
+                '<div style="font-size: 0.78rem; color: #64748b; padding: 0.5rem; text-align: center; background: #ffffff; border-radius: 0.4rem; border: 1px dashed #cbd5e1;">' +
+                (window.isFetchingZipnovaQuotes ? 'Cotizando el envío real con Zipnova…' : (window.zipnovaStatus?.notConfigured ? 'Zipnova no está configurado en el servidor. Coordiná este envío directamente con la tienda.' : 'No hay opciones de envío disponibles para este paquete en este código postal.')) +
+                '</div>'
+              ) : g.availableOptions.map(opt => {
                 const isChecked = opt.id === currentSelectedId;
                 const res = calculateOptionEffectivePrice(opt, g.items, shippingConfig, dest);
                 let priceBadge = '';
@@ -6419,9 +6455,20 @@
             });
 
             let data = {};
-            try { data = await response.json(); } catch (e) {}
+            let parsedJson = true;
+            try { data = await response.json(); } catch (e) { parsedJson = false; }
 
             if (!response.ok) {
+              // If /api/checkout never returned JSON, it means the request never
+              // reached our serverless function's own error handling (which always
+              // responds with JSON) — most likely the function itself isn't deployed.
+              // That happens when the site was exported with "Pagos reales de
+              // Mercado Pago" turned OFF: in that case api/checkout.js is not
+              // included in the .zip at all, and Vercel answers with its generic
+              // 404 page instead. Surface that distinction instead of a vague message.
+              if (!parsedJson || response.status === 404) {
+                throw new Error('No se encontró la función /api/checkout en el servidor (404). Esto pasa cuando el sitio se exportó sin la opción "Pagos reales de Mercado Pago" activada. Activala en el editor (Gateway → Mercado Pago), volvé a exportar el .zip y desplegalo de nuevo en Vercel.');
+              }
               throw new Error(data.error || 'No se pudo crear la orden ni la preferencia con Mercado Pago.');
             }
 
