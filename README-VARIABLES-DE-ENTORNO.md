@@ -16,6 +16,15 @@ uno.
 4. Volvé a desplegar (**Deployments → ⋯ → Redeploy**) para que tomen efecto.
 
 
+## Mercado Pago
+
+- `MP_ACCESS_TOKEN` — Access Token de tu cuenta de Mercado Pago (obligatoria
+  para que `api/checkout.js` pueda crear preferencias de pago reales).
+- `FIREBASE_SERVICE_ACCOUNT_KEY` (o `FIREBASE_PROJECT_ID` +
+  `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`) — opcional, solo si
+  querés que las órdenes se guarden en Firestore vía Firebase Admin. Sin esto
+  el checkout igual funciona, solo no persiste el pedido en la nube.
+
 ## Zipnova
 
 - `ZIPNOVA_API_KEY` y `ZIPNOVA_API_SECRET` — credenciales de tu cuenta de
